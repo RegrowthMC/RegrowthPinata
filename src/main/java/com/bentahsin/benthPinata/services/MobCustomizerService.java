@@ -125,8 +125,6 @@ public class MobCustomizerService {
         }
     }
 
-    // --- 1.13.2 Uyumlu Metotlar ---
-
     private void applyOcelotOptions(Ocelot ocelot, Map<String, Object> options) {
         if (options.get("ocelot-type") instanceof String) {
             String typeName = (String) options.get("ocelot-type");

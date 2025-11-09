@@ -63,7 +63,6 @@ public class BossBarService {
         }
     }
 
-    // Oyuncu sunucuya girdiğinde aktif boss barlara eklemek için
     public void addPlayerToBars(Player player) {
         if (!enabled) return;
         activeBossBars.values().forEach(bar -> bar.addPlayer(player));

@@ -36,7 +36,6 @@ public class PlaceholderService {
                     replacement = entry.getValue().toString();
                 }
             } else {
-                // Eğer o sırada oyuncu yoksa varsayılan değerleri kullan
                 replacement = "name".equals(type) ? DEFAULT_NAME : DEFAULT_DMG;
             }
             matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));

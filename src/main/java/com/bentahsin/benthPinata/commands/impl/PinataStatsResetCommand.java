@@ -16,7 +16,7 @@ public class PinataStatsResetCommand {
         this.messageManager = messageManager;
     }
 
-    @SuppressWarnings("deprecation") // Bukkit.getOfflinePlayer(String) için
+    @SuppressWarnings("deprecation")
     public void execute(CommandSender sender, String[] args) {
         if (args.length < 2) {
             messageManager.sendMessage(sender, "stats.reset.usage");
@@ -35,7 +35,7 @@ public class PinataStatsResetCommand {
                 return;
             }
             playerStatsService.resetPlayerStats(playerToReset.getUniqueId());
-            messageManager.sendMessage(sender, "stats.reset.player-success", "%player%", playerToReset.getName());
+            messageManager.sendMessage(sender, "stats.reset.player-success", "%player%", target);
         }
     }
 }

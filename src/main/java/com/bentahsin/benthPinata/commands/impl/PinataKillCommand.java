@@ -50,13 +50,11 @@ public class PinataKillCommand implements ISubCommand {
 
         List<Pinata> activePinatas = new ArrayList<>(pinataRepository.findAll());
 
-        // Kullanıcı 1'den başlar, liste 0'dan. ID'nin geçerli aralıkta olup olmadığını kontrol et.
         if (pinataId <= 0 || pinataId > activePinatas.size()) {
             messageManager.sendMessage(sender, "kill-command-invalid-id", "%id%", args[0]);
             return;
         }
 
-        // Doğru Piñata'yı listeden al (index = id - 1)
         Pinata pinataToKill = activePinatas.get(pinataId - 1);
 
         boolean success = pinataService.killPinata(pinataToKill.getUniqueId());

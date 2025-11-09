@@ -31,7 +31,6 @@ public class PinataInteractionListener implements Listener {
     public void onPinataDamageByPlayer(EntityDamageByEntityEvent event) {
         Optional<Pinata> pinataOpt = pinataRepository.findByEntity(event.getEntity());
 
-        // Eğer vurulan bir Piñata ise, vanilla hasarını her zaman iptal et.
         if (pinataOpt.isPresent()) {
             event.setCancelled(true);
         }

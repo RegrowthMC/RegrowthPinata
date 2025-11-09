@@ -19,7 +19,6 @@ public class AbilityService {
         this.effectService = effectService;
     }
 
-    // Yetenek tetikleme ana mantığı
     public void tryTriggerAbilities(Pinata pinata) {
         double currentHealthPercentage = (double) pinata.getCurrentHealth() * 100 / pinata.getType().getMaxHealth();
 
@@ -32,11 +31,8 @@ public class AbilityService {
         }
     }
 
-    // Yeteneği çalıştır
     private void executeAbility(Pinata pinata, PinataAbility ability) {
         pinata.markAbilityAsTriggered(ability);
-
-        // Mesaj ve sesleri oynat
         if (ability.getMessage() != null && !ability.getMessage().isEmpty()) {
             Bukkit.broadcastMessage(ChatColor.translateAlternateColorCodes('&', ability.getMessage()));
         }
@@ -44,7 +40,6 @@ public class AbilityService {
             effectService.playSoundForAll(ability.getSound(), pinata.getEntity().getLocation());
         }
 
-        // Yetenek türüne göre işlem yap
         Collection<Player> nearbyPlayers = getNearbyPlayers(pinata, ability.getRange());
 
         switch (ability.getType().toUpperCase()) {

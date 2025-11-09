@@ -87,32 +87,23 @@ public class RewardService {
     public void checkAndGrantThresholdRewards(Player player, Pinata pinata) {
         ConfigurationSection thresholdSection = configManager.getRewardsConfig().getConfigurationSection("damage-thresholds");
         if (thresholdSection == null) {
-            return; // Eşik ödülleri tanımlanmamışsa hiçbir şey yapma.
+            return;
         }
 
         int totalDamage = pinata.getDamagers().getOrDefault(player.getUniqueId(), 0);
         if (totalDamage == 0) {
-            return; // Oyuncunun hasarı yoksa kontrol etmeye gerek yok.
+            return;
         }
 
-        // Tanımlanmış tüm eşikleri döngüye al
         for (String thresholdId : thresholdSection.getKeys(false)) {
             int requiredDamage = thresholdSection.getInt(thresholdId + ".required-damage");
-
-            // Koşul 1: Oyuncunun toplam hasarı, gereken hasardan fazla veya eşit mi?
-            // Koşul 2: Oyuncu bu ödülü daha önce almamış mı?
             if (totalDamage >= requiredDamage && !pinata.hasClaimedThreshold(player.getUniqueId(), thresholdId)) {
-
-                // Önce "alındı" olarak işaretle ki ödülü iki kez alamasın.
                 pinata.markThresholdAsClaimed(player.getUniqueId(), thresholdId);
-
-                // Oyuncuya özel mesaj gönder (varsa).
                 String message = thresholdSection.getString(thresholdId + ".message");
                 if (message != null && !message.isEmpty()) {
                     player.sendMessage(ChatColor.translateAlternateColorCodes('&', message));
                 }
 
-                // Ödül komutlarını çalıştır.
                 List<String> commands = thresholdSection.getStringList(thresholdId + ".commands");
                 executeCommands(commands, player, null);
             }

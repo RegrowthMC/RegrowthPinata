@@ -36,7 +36,7 @@ public class SchedulerService {
             try {
                 String id = (String) map.get("id");
                 boolean enabled = (Boolean) map.get("enabled");
-                if (!enabled) continue; // Kapalıysa yükleme.
+                if (!enabled) continue;
 
                 String pinataType = (String) map.get("pinata-type");
                 String dayStr = ((String) map.get("day")).toUpperCase();
@@ -83,29 +83,26 @@ public class SchedulerService {
                 LocalTime currentTime = now.toLocalTime().withSecond(0).withNano(0); // Saniyeleri önemseme
 
                 for (ScheduledEventConfig event : scheduledEvents) {
-                    // Gün kontrolü (EVERYDAY veya doğru gün)
                     boolean dayMatches = (event.getDayOfWeek() == null || event.getDayOfWeek() == currentDay);
                     if (!dayMatches) continue;
 
-                    // Etkinlik başlangıç zamanı kontrolü
                     if (event.getTime().equals(currentTime)) {
                         tryStartEvent(event);
-                        continue; // Aynı dakika içinde duyuru yapmasını engelle
+                        continue;
                     }
 
-                    // Duyuru zamanı kontrolü
                     for (int minutesBefore : event.getAnnounceBeforeMinutes()) {
                         if (event.getTime().minusMinutes(minutesBefore).equals(currentTime)) {
                             String message = plugin.getMessageManager().getMessage("scheduled-event-announcement",
                                     "%minutes%", String.valueOf(minutesBefore),
                                     "%pinata_type%", event.getPinataType());
                             Bukkit.broadcastMessage(message);
-                            break; // Bu etkinlik için başka duyuru kontrol etme
+                            break;
                         }
                     }
                 }
             }
-        }.runTaskTimer(plugin, 0L, 1200L); // Her 60 saniyede (1 dakika) bir çalıştır
+        }.runTaskTimer(plugin, 0L, 1200L);
     }
 
     private void tryStartEvent(ScheduledEventConfig event) {

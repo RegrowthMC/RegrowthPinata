@@ -13,7 +13,7 @@ public final class ScheduledEventConfig {
     private final String id;
     private final boolean enabled;
     private final String pinataType;
-    private final DayOfWeek dayOfWeek; // 'EVERYDAY' ise null olacak
+    private final DayOfWeek dayOfWeek;
     private final LocalTime time;
     private final int minimumPlayers;
     private final List<Integer> announceBeforeMinutes;

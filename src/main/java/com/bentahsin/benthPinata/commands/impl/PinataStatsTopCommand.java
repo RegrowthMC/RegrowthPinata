@@ -42,7 +42,6 @@ public class PinataStatsTopCommand {
             String playerName = Bukkit.getOfflinePlayer(playerId).getName();
             int value = isDamage ? stats.getTotalDamage() : stats.getPinataKills();
 
-            // Eğer oyuncu ismi null ise (profil bulunamadıysa) atla
             if (playerName == null) continue;
 
             String format = messageManager.getMessage("stats.leaderboard.format");

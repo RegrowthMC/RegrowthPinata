@@ -19,6 +19,7 @@ public class Pinata {
     private final UUID uniqueId;
     private final PinataType type;
     private final LivingEntity entity;
+    private String hologramId;
     private Hologram hologram;
     private BukkitTask updateTask;
     private int currentHealth;
@@ -82,7 +83,6 @@ public class Pinata {
      * @param thresholdId Ödülün eşsiz ID'si.
      */
     public void markThresholdAsClaimed(UUID playerId, String thresholdId) {
-        // Eğer oyuncu için daha önce bir set oluşturulmamışsa, yeni bir tane oluşturur.
         claimedThresholds.computeIfAbsent(playerId, k -> new HashSet<>()).add(thresholdId);
     }
 
@@ -94,7 +94,6 @@ public class Pinata {
         triggeredAbilities.add(ability);
     }
 
-    // Getters and Setters
     public UUID getUniqueId() { return uniqueId; }
     public PinataType getType() { return type; }
     public LivingEntity getEntity() { return entity; }
@@ -104,4 +103,6 @@ public class Pinata {
     public void setUpdateTask(BukkitTask updateTask) { this.updateTask = updateTask; }
     public Hologram getHologram() { return hologram; }
     public void setHologram(Hologram hologram) { this.hologram = hologram; }
+    public String getHologramId() { return hologramId; }
+    public void setHologramId(String hologramId) { this.hologramId = hologramId; }
 }

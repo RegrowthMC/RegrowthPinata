@@ -3,11 +3,11 @@ version: '1.0.1-RELEASE'
 main: com.bentahsin.benthPinata.BenthPinata
 api-version: '1.13'
 author: bentahsin
-depend:
-  - DecentHolograms
 softdepend:
   - TitleManager
+  - ProtocolLib
   - PlaceholderAPI
+  - DecentHolograms
 
 commands:
   pinata:

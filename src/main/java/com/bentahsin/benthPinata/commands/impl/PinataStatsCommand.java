@@ -1,4 +1,3 @@
-// src/main/java/com/bentahsin/benthPinata/commands/impl/PinataStatsCommand.java
 package com.bentahsin.benthPinata.commands.impl;
 
 import com.bentahsin.benthPinata.commands.ISubCommand;
@@ -58,7 +57,6 @@ public class PinataStatsCommand implements ISubCommand {
             }
         }
 
-        // Eğer alt komut yoksa veya geçersizse, oyuncunun kendi istatistiklerini göster
         if (!(sender instanceof Player)) {
             messageManager.sendMessage(sender, "player-only-command");
             return;

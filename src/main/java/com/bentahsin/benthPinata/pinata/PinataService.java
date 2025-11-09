@@ -3,6 +3,7 @@ package com.bentahsin.benthPinata.pinata;
 import com.bentahsin.benthPinata.BenthPinata;
 import com.bentahsin.benthPinata.configuration.MessageManager;
 import com.bentahsin.benthPinata.configuration.SettingsManager;
+import com.bentahsin.benthPinata.hologram.services.IHologramService;
 import com.bentahsin.benthPinata.pinata.model.Pinata;
 import com.bentahsin.benthPinata.pinata.model.PinataAbility;
 import com.bentahsin.benthPinata.pinata.model.PinataType;
@@ -15,26 +16,20 @@ import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.*;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-/**
- * Piñata'ların tüm yaşam döngüsünü yöneten ana servis.
- * Geri sayım, doğma, hasar alma, ölme ve temizleme işlemlerini yürütür.
- */
 public class PinataService {
 
     private final BenthPinata plugin;
     private final SettingsManager settingsManager;
     private final MessageManager messageManager;
     private final PinataRepository pinataRepository;
-    private final HologramService hologramService;
+    private final IHologramService hologramService;
     private final EffectService effectService;
     private final RewardService rewardService;
     private final PlaceholderService placeholderService;
@@ -44,11 +39,11 @@ public class PinataService {
     private final MobCustomizerService mobCustomizerService;
 
     private final Map<String, PinataType> loadedPinataTypes = new HashMap<>();
-    private final List<BukkitTask> activeTasks = new ArrayList<>();
+    private final Map<UUID, BukkitTask> activeCountdownTasks = new HashMap<>();
     private final Map<UUID, Long> playerCooldowns = new HashMap<>();
 
     public PinataService(BenthPinata plugin, SettingsManager settingsManager, MessageManager messageManager,
-                         PinataRepository pinataRepository, HologramService hologramService,
+                         PinataRepository pinataRepository, IHologramService hologramService,
                          EffectService effectService, RewardService rewardService, PlaceholderService placeholderService,
                          BossBarService bossBarService, AbilityService abilityService,
                          PlayerStatsService playerStatsService, MobCustomizerService mobCustomizerService) {
@@ -66,10 +61,6 @@ public class PinataService {
         this.mobCustomizerService = mobCustomizerService;
     }
 
-    /**
-     * Eklenti açılırken veya yeniden yüklenirken config'den tüm Piñata türlerini okur ve belleğe yükler.
-     * Bu metot artık mob türlerini ve özel seçenekleri de destekliyor.
-     */
     public void loadPinataTypes() {
         loadedPinataTypes.clear();
         FileConfiguration mainConfig = plugin.getConfigManager().getMainConfig();
@@ -121,7 +112,6 @@ public class PinataService {
 
             List<PinataAbility> abilities = loadAbilitiesForType(id, abilitiesConfig);
 
-            // PinataType nesnesini oluştur ve haritaya ekle
             PinataType pinataType = new PinataType(id, spawnLocation, health, abilities, entityType, mobOptions);
             loadedPinataTypes.put(id.toLowerCase(), pinataType);
             plugin.getLogger().info(id + " adlı Piñata türü (" + entityType.name() + ") " + abilities.size() + " yetenek ile yüklendi.");
@@ -136,23 +126,10 @@ public class PinataService {
         return defaultValue;
     }
 
-    /**
-     * Belirtilen türde bir Piñata etkinliği için geri sayımı başlatır.
-     * Konum olarak config dosyasındaki varsayılan konumu kullanır.
-     *
-     * @param typeName Başlatılacak Piñata'nın tür ID'si.
-     */
     public void startEvent(String typeName) {
         startEvent(typeName, null);
     }
 
-    /**
-     * Belirtilen türde bir Piñata etkinliğini özel bir konumda başlatır.
-     * Bu, tüm başlatma mantığının merkezi noktasıdır.
-     * @param typeName Başlatılacak Piñata'nın tür ID'si.
-     * @param customLocation Piñata'nın doğacağı özel konum. Eğer null ise config'deki konum kullanılır.
-     * @return Başlatma başarılıysa true, tür bulunamazsa false.
-     */
     public boolean startEvent(String typeName, Location customLocation) {
         Optional<PinataType> typeOpt = getPinataType(typeName);
         if (!typeOpt.isPresent()) {
@@ -160,40 +137,35 @@ public class PinataService {
         }
 
         PinataType type = typeOpt.get();
-
-        // Nihai konumu belirle: Özel konum varsa onu, yoksa config'deki konumu kullan.
         final Location finalLocation = (customLocation != null) ? customLocation : type.getSpawnLocation();
 
         broadcastTitle("countdown-started");
-        effectService.playSoundForAll("countdown-start", finalLocation); // Efektler için yeni konumu kullan
+        effectService.playSoundForAll("countdown-start", finalLocation);
 
         int countdownTime = settingsManager.getCountdownTime();
         final int[] remainingTime = {countdownTime};
 
-        final BukkitTask[] task = new BukkitTask[1];
-        task[0] = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+        UUID eventId = UUID.randomUUID();
+        BukkitTask task = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             if (remainingTime[0] < 1) {
-                spawnPinata(type, finalLocation); // Spawn için yeni konumu kullan
-                task[0].cancel();
-                activeTasks.remove(task[0]);
+                spawnPinata(type, finalLocation);
+                BukkitTask finishedTask = activeCountdownTasks.remove(eventId);
+                if (finishedTask != null) {
+                    finishedTask.cancel();
+                }
                 return;
             }
 
             broadcastTitle("countdown-title", "%time%", String.valueOf(remainingTime[0]));
-            effectService.playSoundForAll("countdown-tick", finalLocation); // Efektler için yeni konumu kullan
+            effectService.playSoundForAll("countdown-tick", finalLocation);
             remainingTime[0]--;
 
         }, 0L, 20L);
 
-        activeTasks.add(task[0]);
+        activeCountdownTasks.put(eventId, task);
         return true;
     }
 
-    /**
-     * Bir oyuncu Piñata'ya vurduğunda tetiklenir.
-     * @param damager Hasarı vuran oyuncu.
-     * @param pinata Hasar alan Piñata.
-     */
     public void handleDamage(Player damager, Pinata pinata) {
         long now = System.currentTimeMillis();
         long cooldownEnd = playerCooldowns.getOrDefault(damager.getUniqueId(), 0L);
@@ -203,12 +175,11 @@ public class PinataService {
         if (pinata.isDying()) return;
 
         boolean isDead = pinata.applyDamage(damager, 1);
-
         playerStatsService.addDamage(damager, 1);
 
         abilityService.tryTriggerAbilities(pinata);
         bossBarService.updateProgress(pinata);
-        hologramService.updateHologramFor(pinata);
+        hologramService.updateHologram(pinata);
         effectService.playSoundForAll("hit", pinata.getEntity().getLocation());
         effectService.spawnParticle("hit", pinata.getEntity().getEyeLocation());
 
@@ -226,12 +197,9 @@ public class PinataService {
         }
     }
 
-    /**
-     * Tüm aktif Piñata'ları ve ilgili görevleri sonlandırır.
-     */
     public void killAll() {
-        new ArrayList<>(activeTasks).forEach(BukkitTask::cancel);
-        activeTasks.clear();
+        new ArrayList<>(activeCountdownTasks.values()).forEach(BukkitTask::cancel);
+        activeCountdownTasks.clear();
 
         new ArrayList<>(pinataRepository.findAll()).forEach(this::cleanupPinata);
         pinataRepository.clear();
@@ -239,23 +207,10 @@ public class PinataService {
         playerCooldowns.clear();
     }
 
-    /**
-     * Bir Piñata türünün var olup olmadığını kontrol eder.
-     * @param id Türün ID'si.
-     * @return PinataType nesnesini içeren bir Optional.
-     */
     public Optional<PinataType> getPinataType(String id) {
         return Optional.ofNullable(loadedPinataTypes.get(id.toLowerCase()));
     }
 
-
-    // --- Private Helper Methods ---
-
-    /**
-     * Dünyada bir Piñata oluşturur ve onu yönetmeye başlar.
-     * Bu metot artık herhangi bir LivingEntity yaratabilir.
-     * @param type Oluşturulacak Piñata'nın türü.
-     */
     private void spawnPinata(PinataType type, Location loc) {
         World world = loc.getWorld();
         if (world == null) {
@@ -263,65 +218,26 @@ public class PinataService {
             return;
         }
 
-        // Entity'yi belirtilen türde yarat.
         Entity spawnedEntity = world.spawnEntity(loc, type.getEntityType());
         if (!(spawnedEntity instanceof LivingEntity)) {
             plugin.getLogger().severe(type.getId() + " için yaratılan varlık bir LivingEntity değil! Bu bir hata. Lütfen kontrol edin.");
-            spawnedEntity.remove(); // Hatalı entity'yi temizle
+            spawnedEntity.remove();
             return;
         }
         LivingEntity livingEntity = (LivingEntity) spawnedEntity;
 
-        // Genel entity ayarları
         livingEntity.setRemoveWhenFarAway(false);
         livingEntity.setMetadata(Pinata.METADATA_KEY, new FixedMetadataValue(plugin, type.getId()));
 
         mobCustomizerService.applyOptions(livingEntity, type.getMobOptions());
 
-
         Pinata pinata = new Pinata(type, livingEntity);
-        hologramService.createHologramFor(pinata);
+        hologramService.createHologram(pinata);
         pinataRepository.save(pinata);
         bossBarService.createBossBar(pinata);
 
         broadcastTitle("pinata-spawned");
         effectService.playSoundForAll("spawn", livingEntity.getLocation());
-
-        // Periyodik güncelleme görevi
-        BukkitTask updateTask = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            if (!pinata.getEntity().isValid() || pinata.isDying()) {
-                if (pinata.getUpdateTask() != null && !pinata.getUpdateTask().isCancelled()) {
-                    pinata.getUpdateTask().cancel();
-                    activeTasks.remove(pinata.getUpdateTask());
-                }
-                return;
-            }
-
-            // Hologramı ve yetenekleri güncelle
-            hologramService.updateHologramFor(pinata);
-            abilityService.tryTriggerAbilities(pinata);
-
-            if (pinata.getEntity() instanceof Sheep) {
-                Sheep sheep = (Sheep) pinata.getEntity();
-                sheep.setColor(org.bukkit.DyeColor.values()[new Random().nextInt(org.bukkit.DyeColor.values().length)]);
-            }
-
-            // Rastgele bir oyuncuyu hedef al (AI varsa)
-            if (pinata.getEntity().hasAI()) {
-                List<Player> nearbyPlayers = pinata.getEntity().getNearbyEntities(30, 30, 30)
-                        .stream()
-                        .filter(e -> e instanceof Player)
-                        .map(e -> (Player) e)
-                        .collect(Collectors.toList());
-                if (!nearbyPlayers.isEmpty() && pinata.getEntity() instanceof Mob) {
-                    Mob mob = (Mob) pinata.getEntity();
-                    mob.setTarget(nearbyPlayers.get(new Random().nextInt(nearbyPlayers.size())));
-                }
-            }
-        }, 20L, 4L);
-
-        pinata.setUpdateTask(updateTask);
-        activeTasks.add(updateTask);
     }
 
     private List<PinataAbility> loadAbilitiesForType(String typeId, FileConfiguration abilitiesConfig) {
@@ -364,24 +280,16 @@ public class PinataService {
         return abilities;
     }
 
-    /**
-     * Bir Piñata öldüğünde çalışır, ödülleri dağıtır ve temizlik yapar.
-     * @param pinata Ölen Piñata.
-     */
     public void handleDeath(Pinata pinata) {
         effectService.playSoundForAll("death", pinata.getEntity().getLocation());
         effectService.spawnParticle("death", pinata.getEntity().getLocation());
         broadcastTitle("pinata-death-title");
 
-        // Broadcast mesajları için placeholder'ları doldurup gönder
         List<Map.Entry<UUID, Integer>> sortedDamagers = pinata.getSortedDamagers();
 
         if (!sortedDamagers.isEmpty()) {
             UUID topDamagerId = sortedDamagers.get(0).getKey();
-            Player topDamager = Bukkit.getPlayer(topDamagerId);
-            if (topDamager != null && topDamager.isOnline()) {
-                playerStatsService.addKill(topDamager);
-            }
+            playerStatsService.addKill(topDamagerId);
         }
 
         messageManager.getMessageList("death-broadcast").forEach(line -> {
@@ -393,20 +301,11 @@ public class PinataService {
         cleanupPinata(pinata);
     }
 
-    /**
-     * Bir Piñata ile ilişkili her şeyi (hologram, entity) sunucudan kaldırır.
-     * @param pinata Temizlenecek Piñata.
-     */
     private void cleanupPinata(Pinata pinata) {
         if (pinata == null) return;
 
-        if (pinata.getUpdateTask() != null && !pinata.getUpdateTask().isCancelled()) {
-            pinata.getUpdateTask().cancel();
-            activeTasks.remove(pinata.getUpdateTask());
-        }
-
         bossBarService.removeBossBar(pinata);
-        hologramService.deleteHologramFor(pinata);
+        hologramService.deleteHologram(pinata);
         if (pinata.getEntity() != null) {
             pinata.getEntity().remove();
         }
@@ -445,11 +344,6 @@ public class PinataService {
         }
     }
 
-    /**
-     * Belirtilen UUID'ye sahip tek bir Piñata'yı bulur ve sonlandırır.
-     * @param pinataId Sonlandırılacak Piñata'nın eşsiz kimliği (UUID).
-     * @return Piñata bulunup başarıyla sonlandırıldıysa true, aksi takdirde false.
-     */
     public boolean killPinata(UUID pinataId) {
         for (Pinata pinata : pinataRepository.findAll()) {
             if (pinata.getUniqueId().equals(pinataId)) {
@@ -460,10 +354,6 @@ public class PinataService {
         return false;
     }
 
-    /**
-     * Belleğe yüklenmiş olan tüm Piñata türlerinin ID'lerini döndürür.
-     * @return Piñata türü ID'lerini içeren bir Set.
-     */
     public Set<String> getLoadedTypeIds() {
         return loadedPinataTypes.keySet();
     }

@@ -35,44 +35,35 @@ public class EventManager implements Listener {
     private void startTimedEventScheduler() {
         ConfigurationSection timedConfig = configManager.getMainConfig().getConfigurationSection("automatic-events.timed");
         if (timedConfig == null || !timedConfig.getBoolean("enabled", false)) {
-            return; // Zamanlı etkinlikler kapalıysa başlatma.
+            return;
         }
 
         long intervalTicks = TimeUnit.MINUTES.toSeconds(timedConfig.getInt("interval-minutes", 120)) * 20;
 
-        // Her 5 dakikada bir kontrol eden bir zamanlayıcı.
         Bukkit.getScheduler().runTaskTimer(plugin, () -> {
-            // Sunucudaki oyuncu sayısı minimum gereksinimi karşılıyor mu?
             if (Bukkit.getOnlinePlayers().size() >= timedConfig.getInt("minimum-players", 5)) {
-
-                // Halihazırda aktif bir Piñata var mı? Varsa yenisini başlatma.
                 if (plugin.getPinataRepository().findAll().isEmpty()) {
                     String type = timedConfig.getString("pinata-type", "default");
                     Bukkit.broadcastMessage("§d[BenthPiñata] §eSunucu canlandı! Otomatik bir Piñata etkinliği başlıyor!");
                     pinataService.startEvent(type);
                 }
             }
-        }, intervalTicks, intervalTicks); // Başlangıçta bir kere ve sonra periyodik olarak çalışır.
+        }, intervalTicks, intervalTicks);
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         ConfigurationSection playerCountConfig = configManager.getMainConfig().getConfigurationSection("automatic-events.player-count");
         if (playerCountConfig == null || !playerCountConfig.getBoolean("enabled", false)) {
-            return; // Oyuncu sayısı etkinliği kapalıysa kontrol etme.
+            return;
         }
 
         int currentPlayers = Bukkit.getOnlinePlayers().size();
         int requiredPlayers = playerCountConfig.getInt("required-players", 20);
 
-        // Oyuncu sayısı tam olarak hedefe ulaştı mı?
         if (currentPlayers == requiredPlayers) {
-
-            // Cooldown süresi geçti mi?
             long cooldownMillis = TimeUnit.MINUTES.toMillis(playerCountConfig.getInt("cooldown-minutes", 90));
             if (System.currentTimeMillis() - lastPlayerCountEventTimestamp > cooldownMillis) {
-
-                // Halihazırda aktif bir Piñata var mı?
                 if (plugin.getPinataRepository().findAll().isEmpty()) {
                     lastPlayerCountEventTimestamp = System.currentTimeMillis();
                     String type = playerCountConfig.getString("pinata-type", "default");

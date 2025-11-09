@@ -15,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class PinataRepository {
 
-    // Entity'nin UUID'si ile Piñata'yı hızlıca bulmak için bir harita.
     private final Map<UUID, Pinata> pinatasByEntityId = new ConcurrentHashMap<>();
 
     public void save(Pinata pinata) {

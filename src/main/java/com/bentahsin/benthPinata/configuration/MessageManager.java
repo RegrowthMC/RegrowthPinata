@@ -37,7 +37,6 @@ public class MessageManager {
         StringBuffer buffer = new StringBuffer();
 
         while (matcher.find()) {
-            // #RRGGBB'yi bul ve onu &x&R&R&G&G&B&B formatına çevir.
             String hexColor = matcher.group(1);
             StringBuilder magic = new StringBuilder("&x");
             for (char c : hexColor.toCharArray()) {
@@ -47,7 +46,6 @@ public class MessageManager {
         }
         matcher.appendTail(buffer);
 
-        // Son olarak, standart '&' renk kodlarını çevir.
         return ChatColor.translateAlternateColorCodes('&', buffer.toString());
     }
 

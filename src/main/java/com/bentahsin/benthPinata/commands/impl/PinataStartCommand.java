@@ -44,18 +44,15 @@ public class PinataStartCommand implements ISubCommand {
         String pinataTypeName = args[0];
         Location customLocation = null;
 
-        // Komut formatını kontrol et
         if (args.length > 1) {
-            // Durum 1: /pinata start <tür> here
             if (args.length == 2 && args[1].equalsIgnoreCase("here")) {
-                if (!(sender instanceof Player)) { // DEĞİŞİKLİK 1
+                if (!(sender instanceof Player)) {
                     messageManager.sendMessage(sender, "player-only-command");
                     return;
                 }
-                Player player = (Player) sender; // DEĞİŞİKLİK 1
+                Player player = (Player) sender;
                 customLocation = player.getLocation();
             }
-            // Durum 2: /pinata start <tür> <dünya> <x> <y> <z>
             else if (args.length == 5) {
                 try {
                     World world = Bukkit.getWorld(args[1]);
@@ -76,8 +73,6 @@ public class PinataStartCommand implements ISubCommand {
                 return;
             }
         }
-
-        // PinataService'i uygun metotla çağır
         boolean success = pinataService.startEvent(pinataTypeName, customLocation);
 
         if (!success) {
@@ -87,21 +82,17 @@ public class PinataStartCommand implements ISubCommand {
 
     @Override
     public List<String> tabComplete(CommandSender sender, String[] args) {
-        // /pinata start <tür>
         if (args.length == 1) {
             String currentArg = args[0].toLowerCase();
             return pinataService.getLoadedTypeIds().stream()
                     .filter(type -> type.toLowerCase().startsWith(currentArg))
                     .collect(Collectors.toList());
         }
-
-        // /pinata start <tür> [here | dünya]
         if (args.length == 2) {
             List<String> suggestions = new ArrayList<>();
             if (sender instanceof Player) {
                 suggestions.add("here");
             }
-            // DEĞİŞİKLİK 2: .toList() yerine .collect(Collectors.toList()) kullanıldı
             List<String> worldNames = Bukkit.getWorlds().stream().map(World::getName).collect(Collectors.toList());
             suggestions.addAll(worldNames);
 
@@ -109,8 +100,6 @@ public class PinataStartCommand implements ISubCommand {
                     .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
                     .collect(Collectors.toList());
         }
-
-        // /pinata start <tür> <dünya> [x] [y] [z]
         if (args.length >= 3 && args.length <= 5) {
             if (sender instanceof Player) {
                 Player player = (Player) sender;

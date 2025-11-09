@@ -52,18 +52,14 @@ public class ConfigManager {
         return file;
     }
 
-    // İlgili config nesneleri için getter metotları
     public FileConfiguration getMainConfig() {
         return mainConfig;
     }
-
     public FileConfiguration getMessagesConfig() {
         return messagesConfig;
     }
-
     public FileConfiguration getRewardsConfig() {
         return rewardsConfig;
     }
-
     public FileConfiguration getAbilitiesConfig() { return abilitiesConfig; }
     }

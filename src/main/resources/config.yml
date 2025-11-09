@@ -12,6 +12,15 @@
 # ------------------------------------------------------------------ #
 
 # ------------------------------------------------------------------ #
+#                         Depolama Ayarları                          #
+# ------------------------------------------------------------------ #
+storage:
+  # Oyuncu istatistiklerinin nerede saklanacağını belirler.
+  # SQLITE: Daha büyük sunucular için önerilen, daha performanslı yöntem. (database.db dosyası oluşturur)
+  # YAML: Küçük sunucular veya basitlik için kullanılan varsayılan dosya tabanlı yöntem. (stats.yml dosyası)
+  type: SQLITE
+
+# ------------------------------------------------------------------ #
 #                           Genel Ayarlar                            #
 # ------------------------------------------------------------------ #
 general:
@@ -66,7 +75,6 @@ pinata-types:
       glowing: false
       # Llama'ya özel seçenekler
       llama-color: 'CREAMY'      # Renkler: CREAMY, WHITE, BROWN, GRAY
-      carpet-color: 'PURPLE'   # Herhangi bir yün rengi (örn: BLUE, RED...)
 
   # At Piñata örneği
   pegasus:

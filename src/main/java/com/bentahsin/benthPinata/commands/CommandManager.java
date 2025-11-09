@@ -1,5 +1,3 @@
-// src/main/java/com/bentahsin/benthPinata/commands/CommandManager.java
-
 package com.bentahsin.benthPinata.commands;
 
 import com.bentahsin.benthPinata.configuration.MessageManager;
@@ -63,9 +61,6 @@ public class CommandManager implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    /**
-     * Tab tamamlamayıcı
-     */
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
         if (args.length == 1) {
