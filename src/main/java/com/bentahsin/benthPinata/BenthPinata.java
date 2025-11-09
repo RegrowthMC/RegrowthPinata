@@ -7,7 +7,9 @@ import com.bentahsin.benthPinata.configuration.MessageManager;
 import com.bentahsin.benthPinata.configuration.SettingsManager;
 import com.bentahsin.benthPinata.expansion.BenthPinataExpansion;
 import com.bentahsin.benthPinata.hologram.HologramServiceProvider;
+import com.bentahsin.benthPinata.hologram.services.DecentHologramService;
 import com.bentahsin.benthPinata.hologram.services.IHologramService;
+import com.bentahsin.benthPinata.hologram.services.ProtocolHologramService;
 import com.bentahsin.benthPinata.listeners.PinataInteractionListener;
 import com.bentahsin.benthPinata.pinata.PinataRepository;
 import com.bentahsin.benthPinata.pinata.PinataService;
@@ -31,12 +33,15 @@ public final class BenthPinata extends JavaPlugin {
     private BossBarService bossBarService;
     private PinataRepository pinataRepository;
     private PinataService pinataService;
-    private PinataUpdateService pinataUpdateService;
+    private PinataAuraService auraUpdater;
+    private HologramUpdateService hologramUpdater;
     private EventManager eventManager;
     private PlayerStatsService playerStatsService;
     private StatsLeaderboardService statsLeaderboardService;
     private BenthPinataExpansion expansion;
     private BukkitTask autoSaveTask;
+    private BukkitTask hologramUpdateTask;
+    private BukkitTask pinataAuraTask;
 
     @Override
     public void onEnable() {
@@ -89,9 +94,25 @@ public final class BenthPinata extends JavaPlugin {
                 mobCustomizerService
         );
 
+        this.hologramUpdater = new HologramUpdateService(this.pinataRepository, this.hologramService);
+        long hologramUpdatePeriod;
 
-        this.pinataUpdateService = new PinataUpdateService(this.pinataRepository, this.hologramService, abilityService);
-        this.pinataUpdateService.runTaskTimer(this, 40L, 4L);
+        if (this.hologramService instanceof ProtocolHologramService) {
+            hologramUpdatePeriod = 1L;
+            getLogger().info("ProtocolLib hologram güncelleyici maksimum periyotta (1 tick) çalışacak.");
+        } else if (this.hologramService instanceof DecentHologramService) {
+            hologramUpdatePeriod = 5L;
+            getLogger().info("DecentHolograms hologram güncelleyici güvenli periyotta (5 tick) çalışacak.");
+        } else {
+            hologramUpdatePeriod = -1;
+        }
+
+        if (hologramUpdatePeriod > 0) {
+            this.hologramUpdateTask = hologramUpdater.runTaskTimer(this, 20L, hologramUpdatePeriod);
+        }
+
+        this.auraUpdater = new PinataAuraService(this.pinataRepository, abilityService);
+        this.pinataAuraTask = this.auraUpdater.runTaskTimer(this, 40L, 4L);
 
         this.eventManager = new EventManager(this, this.pinataService, this.configManager);
         this.eventManager.start();
@@ -123,8 +144,11 @@ public final class BenthPinata extends JavaPlugin {
     }
 
     public void shutdown() {
-        if (this.pinataUpdateService != null && !this.pinataUpdateService.isCancelled()) {
-            this.pinataUpdateService.cancel();
+        if (this.hologramUpdateTask != null && !this.hologramUpdateTask.isCancelled()) {
+            this.hologramUpdateTask.cancel();
+        }
+        if (this.pinataAuraTask != null && !this.pinataAuraTask.isCancelled()) {
+            this.pinataAuraTask.cancel();
         }
         if (this.autoSaveTask != null && !this.autoSaveTask.isCancelled()) {
             this.autoSaveTask.cancel();

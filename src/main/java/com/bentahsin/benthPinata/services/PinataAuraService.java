@@ -18,16 +18,14 @@ import java.util.stream.Collectors;
  * Bu "Singleton Task" yapısı, her Piñata için ayrı görevler oluşturmak yerine
  * tek bir görev kullanarak sunucu kaynaklarını verimli bir şekilde kullanır.
  */
-public class PinataUpdateService extends BukkitRunnable {
+public class PinataAuraService extends BukkitRunnable {
 
     private final PinataRepository pinataRepository;
-    private final IHologramService hologramService;
     private final AbilityService abilityService;
     private final Random random = new Random();
 
-    public PinataUpdateService(PinataRepository pinataRepository, IHologramService hologramService, AbilityService abilityService) {
+    public PinataAuraService(PinataRepository pinataRepository, AbilityService abilityService) {
         this.pinataRepository = pinataRepository;
-        this.hologramService = hologramService;
         this.abilityService = abilityService;
     }
 
@@ -42,7 +40,6 @@ public class PinataUpdateService extends BukkitRunnable {
                 continue;
             }
 
-            hologramService.updateHologram(pinata);
             abilityService.tryTriggerAbilities(pinata);
 
             if (pinata.getEntity() instanceof Sheep) {
