@@ -13,7 +13,6 @@ repositories {
     maven("https://oss.sonatype.org/content/groups/public/")
     maven("https://repo.papermc.io/repository/maven-public/") // Paper
     maven("https://repo.lushplugins.org/snapshots/") // LushLib, PlaceholderHandler
-
     maven("https://repo.codemc.io/repository/maven-public/") // PlaceholderAPI
     maven("https://repo.dmulloy2.net/repository/public/") // ProtocolLib
     maven("https://jitpack.io/")
