@@ -1,0 +1,123 @@
+package org.lushplugins.pinata.services;
+
+import org.lushplugins.pinata.RegrowthPinata;
+import org.lushplugins.pinata.pinata.PinataService;
+import org.bukkit.Bukkit;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+public class SchedulerService {
+
+    private final RegrowthPinata plugin;
+    private final PinataService pinataService;
+    private final List<ScheduledEventConfig> scheduledEvents = new ArrayList<>();
+
+    public SchedulerService(RegrowthPinata plugin, PinataService pinataService) {
+        this.plugin = plugin;
+        this.pinataService = pinataService;
+    }
+
+    public void loadAndStart() {
+        ConfigurationSection scheduledSection = plugin.getConfigManager().getMainConfig().getConfigurationSection("automatic-events.scheduled");
+        if (scheduledSection == null || !scheduledSection.getBoolean("enabled", false)) {
+            plugin.getLogger().info("Zamanlanmış etkinlikler (Scheduler) devre dışı.");
+            return;
+        }
+
+        List<Map<?, ?>> scheduleMaps = scheduledSection.getMapList("schedules");
+        for (Map<?, ?> map : scheduleMaps) {
+            try {
+                String id = (String) map.get("id");
+                boolean enabled = (Boolean) map.get("enabled");
+                if (!enabled) continue;
+
+                String pinataType = (String) map.get("pinata-type");
+                String dayStr = ((String) map.get("day")).toUpperCase();
+                String timeStr = (String) map.get("time");
+                int minPlayers = (Integer) map.get("minimum-players");
+                List<?> rawAnnounceList = (List<?>) map.get("announce-before");
+                List<Integer> announceMinutes = new ArrayList<>();
+
+                if (rawAnnounceList != null) {
+                    for (Object obj : rawAnnounceList) {
+                        if (obj instanceof Integer) {
+                            announceMinutes.add((Integer) obj);
+                        } else {
+                            plugin.getLogger().warning("Zamanlanmış etkinlik '" + id + "' için 'announce-before' listesinde geçersiz bir değer bulundu: '" + obj + "'. Bu değer atlanıyor.");
+                        }
+                    }
+                }
+
+                DayOfWeek dayOfWeek = null;
+                if (!dayStr.equals("EVERYDAY")) {
+                    dayOfWeek = DayOfWeek.valueOf(dayStr);
+                }
+
+                LocalTime time = LocalTime.parse(timeStr);
+
+                scheduledEvents.add(new ScheduledEventConfig(id, enabled, pinataType, dayOfWeek, time, minPlayers, announceMinutes));
+            } catch (Exception e) {
+                plugin.getLogger().severe("Zamanlanmış bir etkinlik yüklenirken hata oluştu! Lütfen config.yml'yi kontrol edin. Hata: " + e.getMessage());
+            }
+        }
+
+        if (!scheduledEvents.isEmpty()) {
+            startSchedulerTask();
+            plugin.getLogger().info(scheduledEvents.size() + " adet zamanlanmış etkinlik başarıyla yüklendi ve zamanlayıcı başlatıldı.");
+        }
+    }
+
+    private void startSchedulerTask() {
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                LocalDateTime now = LocalDateTime.now();
+                DayOfWeek currentDay = now.getDayOfWeek();
+                LocalTime currentTime = now.toLocalTime().withSecond(0).withNano(0); // Saniyeleri önemseme
+
+                for (ScheduledEventConfig event : scheduledEvents) {
+                    boolean dayMatches = (event.getDayOfWeek() == null || event.getDayOfWeek() == currentDay);
+                    if (!dayMatches) continue;
+
+                    if (event.getTime().equals(currentTime)) {
+                        tryStartEvent(event);
+                        continue;
+                    }
+
+                    for (int minutesBefore : event.getAnnounceBeforeMinutes()) {
+                        if (event.getTime().minusMinutes(minutesBefore).equals(currentTime)) {
+                            String message = plugin.getMessageManager().getMessage("scheduled-event-announcement",
+                                    "%minutes%", String.valueOf(minutesBefore),
+                                    "%pinata_type%", event.getPinataType());
+                            Bukkit.broadcastMessage(message);
+                            break;
+                        }
+                    }
+                }
+            }
+        }.runTaskTimer(plugin, 0L, 1200L);
+    }
+
+    private void tryStartEvent(ScheduledEventConfig event) {
+        if (Bukkit.getOnlinePlayers().size() < event.getMinimumPlayers()) {
+            plugin.getLogger().info("Zamanlanmış etkinlik '" + event.getId() + "' minimum oyuncu sayısına (" + event.getMinimumPlayers() + ") ulaşılamadığı için atlandı.");
+            return;
+        }
+
+        if (!plugin.getPinataRepository().findAll().isEmpty()) {
+            plugin.getLogger().info("Zamanlanmış etkinlik '" + event.getId() + "' başka bir Piñata aktif olduğu için atlandı.");
+            return;
+        }
+
+        String message = plugin.getMessageManager().getMessage("scheduled-event-start", "%pinata_type%", event.getPinataType());
+        Bukkit.broadcastMessage(message);
+        pinataService.startEvent(event.getPinataType());
+    }
+}

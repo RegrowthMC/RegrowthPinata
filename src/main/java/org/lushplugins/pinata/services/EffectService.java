@@ -1,0 +1,50 @@
+package org.lushplugins.pinata.services;
+
+import org.bukkit.*;
+import org.lushplugins.pinata.configuration.ConfigManager;
+
+import java.util.Objects;
+
+/**
+ * Eklenti içindeki tüm ses ve partikül efektlerini yönetir.
+ */
+public class EffectService {
+
+    private final ConfigManager configManager;
+
+    public EffectService(ConfigManager configManager) {
+        this.configManager = configManager;
+    }
+
+    /**
+     * Tüm oyunculara belirli bir konfigürasyon yolundaki sesi çalar.
+     * @param soundPath config.yml içindeki sesin yolu.
+     * @param location Sesin çalınacağı konum.
+     */
+    public void playSoundForAll(String soundPath, Location location) {
+        try {
+            String soundName = configManager.getMainConfig().getString("sounds." + soundPath);
+            assert soundName != null;
+            Sound sound = Registry.SOUNDS.getOrThrow(NamespacedKey.fromString(soundName));
+            Objects.requireNonNull(location.getWorld()).playSound(location, sound, 1.0f, 1.0f);
+        } catch (Exception e) {
+            Bukkit.getLogger().warning("[BenthPinata] 'sounds." + soundPath + "' yolundaki ses geçersiz.");
+        }
+    }
+
+    /**
+     * Belirli bir konumda partikül efekti oluşturur.
+     * @param particlePath config.yml içindeki partikülün yolu.
+     * @param location Efektin oluşturulacağı konum.
+     */
+    public void spawnParticle(String particlePath, Location location) {
+        try {
+            String particleName = configManager.getMainConfig().getString("effects." + particlePath);
+            assert particleName != null;
+            Particle particle = Particle.valueOf(particleName.toUpperCase());
+            Objects.requireNonNull(location.getWorld()).spawnParticle(particle, location, 30, 0.5, 0.5, 0.5, 0.05);
+        } catch (Exception e) {
+            Bukkit.getLogger().warning("[BenthPinata] 'effects." + particlePath + "' yolundaki partikül geçersiz.");
+        }
+    }
+}
