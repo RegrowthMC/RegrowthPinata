@@ -1,12 +1,12 @@
 package org.lushplugins.pinata.pinata;
 
 import org.lushplugins.pinata.RegrowthPinata;
-import org.lushplugins.pinata.configuration.MessageManager;
-import org.lushplugins.pinata.configuration.SettingsManager;
+import org.lushplugins.pinata.config.MessageManager;
+import org.lushplugins.pinata.config.SettingsManager;
 import org.lushplugins.pinata.pinata.model.Pinata;
 import org.lushplugins.pinata.pinata.model.PinataAbility;
 import org.lushplugins.pinata.pinata.model.PinataType;
-import org.lushplugins.pinata.services.*;
+import org.lushplugins.pinata.service.*;
 import org.lushplugins.pinata.stats.PlayerStatsService;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;

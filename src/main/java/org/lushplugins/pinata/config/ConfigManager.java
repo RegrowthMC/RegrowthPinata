@@ -1,4 +1,4 @@
-package org.lushplugins.pinata.configuration;
+package org.lushplugins.pinata.config;
 
 import org.lushplugins.pinata.RegrowthPinata;
 import org.bukkit.configuration.file.FileConfiguration;

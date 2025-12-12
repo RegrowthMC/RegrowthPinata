@@ -1,15 +1,13 @@
 package org.lushplugins.pinata;
 
-import org.lushplugins.pinata.commands.CommandManager;
-import org.lushplugins.pinata.commands.impl.*;
-import org.lushplugins.pinata.configuration.ConfigManager;
-import org.lushplugins.pinata.configuration.MessageManager;
-import org.lushplugins.pinata.configuration.SettingsManager;
+import org.lushplugins.pinata.config.ConfigManager;
+import org.lushplugins.pinata.config.MessageManager;
+import org.lushplugins.pinata.config.SettingsManager;
 import org.lushplugins.pinata.expansion.BenthPinataExpansion;
-import org.lushplugins.pinata.listeners.PinataInteractionListener;
+import org.lushplugins.pinata.listener.PinataInteractionListener;
 import org.lushplugins.pinata.pinata.PinataRepository;
 import org.lushplugins.pinata.pinata.PinataService;
-import org.lushplugins.pinata.services.*;
+import org.lushplugins.pinata.service.*;
 import org.lushplugins.pinata.stats.PlayerStatsService;
 import org.lushplugins.pinata.stats.StatsLeaderboardService;
 import org.bukkit.Bukkit;
@@ -21,6 +19,7 @@ import org.bukkit.scheduler.BukkitTask;
 import java.util.Objects;
 
 public final class RegrowthPinata extends JavaPlugin {
+    private static RegrowthPinata plugin;
 
     private ConfigManager configManager;
     private MessageManager messageManager;
@@ -36,6 +35,12 @@ public final class RegrowthPinata extends JavaPlugin {
     private BukkitTask autoSaveTask;
     private BukkitTask hologramUpdateTask;
     private BukkitTask pinataAuraTask;
+
+    @Override
+    public void onLoad() {
+        plugin = this;
+    }
+
 
     @Override
     public void onEnable() {
@@ -141,18 +146,6 @@ public final class RegrowthPinata extends JavaPlugin {
     }
 
     public void registerHandlers() {
-        CommandManager commandManager = new CommandManager(this.messageManager);
-        commandManager.registerCommand(new PinataStartCommand(this.pinataService, this.messageManager));
-        commandManager.registerCommand(new PinataReloadCommand(this));
-        commandManager.registerCommand(new PinataKillAllCommand(this.pinataService, this.messageManager));
-        commandManager.registerCommand(new PinataHelpCommand(this.messageManager));
-        commandManager.registerCommand(new PinataStatsCommand(this.playerStatsService, this.messageManager, this.statsLeaderboardService));
-        commandManager.registerCommand(new PinataListCommand(this.pinataRepository, this.messageManager));
-        commandManager.registerCommand(new PinataKillCommand(this.pinataService, this.pinataRepository, this.messageManager));
-
-        Objects.requireNonNull(getCommand("pinata")).setExecutor(commandManager);
-        Objects.requireNonNull(getCommand("pinata")).setTabCompleter(commandManager);
-
         getServer().getPluginManager().registerEvents(new PinataInteractionListener(this.pinataRepository, this.pinataService, this.bossBarService), this);
         getServer().getPluginManager().registerEvents(this.eventManager, this);
     }
@@ -163,8 +156,31 @@ public final class RegrowthPinata extends JavaPlugin {
         getLogger().info("BenthPinata eklentisi başarıyla yeniden yüklendi.");
     }
 
-    public ConfigManager getConfigManager() { return configManager; }
-    public MessageManager getMessageManager() { return messageManager; }
-    public SettingsManager getSettingsManager() { return settingsManager; }
-    public PinataRepository getPinataRepository() { return pinataRepository; }
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+
+    public MessageManager getMessageManager() {
+        return messageManager;
+    }
+
+    public SettingsManager getSettingsManager() {
+        return settingsManager;
+    }
+
+    public PinataRepository getPinataRepository() {
+        return pinataRepository;
+    }
+
+    public PinataService getPinataService() {
+        return pinataService;
+    }
+
+    public PlayerStatsService getPlayerStatsService() {
+        return playerStatsService;
+    }
+
+    public static RegrowthPinata getInstance() {
+        return plugin;
+    }
 }

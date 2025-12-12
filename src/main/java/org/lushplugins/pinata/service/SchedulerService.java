@@ -1,4 +1,4 @@
-package org.lushplugins.pinata.services;
+package org.lushplugins.pinata.service;
 
 import org.lushplugins.pinata.RegrowthPinata;
 import org.lushplugins.pinata.pinata.PinataService;

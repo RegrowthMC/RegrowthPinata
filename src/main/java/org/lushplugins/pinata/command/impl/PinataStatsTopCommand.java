@@ -1,6 +1,6 @@
-package org.lushplugins.pinata.commands.impl;
+package org.lushplugins.pinata.command.impl;
 
-import org.lushplugins.pinata.configuration.MessageManager;
+import org.lushplugins.pinata.config.MessageManager;
 import org.lushplugins.pinata.stats.PlayerStats;
 import org.lushplugins.pinata.stats.StatsLeaderboardService;
 import org.bukkit.Bukkit;

@@ -1,7 +1,7 @@
-package org.lushplugins.pinata.services;
+package org.lushplugins.pinata.service;
 
 import org.bukkit.*;
-import org.lushplugins.pinata.configuration.ConfigManager;
+import org.lushplugins.pinata.config.ConfigManager;
 
 import java.util.Objects;
 

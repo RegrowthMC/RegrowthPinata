@@ -1,4 +1,4 @@
-package org.lushplugins.pinata.configuration;
+package org.lushplugins.pinata.config;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;

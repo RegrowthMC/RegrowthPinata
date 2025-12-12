@@ -1,7 +1,7 @@
-package org.lushplugins.pinata.services;
+package org.lushplugins.pinata.service;
 
 import org.lushplugins.pinata.RegrowthPinata;
-import org.lushplugins.pinata.configuration.ConfigManager;
+import org.lushplugins.pinata.config.ConfigManager;
 import org.lushplugins.pinata.pinata.PinataService;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.ConfigurationSection;

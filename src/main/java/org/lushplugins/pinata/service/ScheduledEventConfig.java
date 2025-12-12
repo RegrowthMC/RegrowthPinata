@@ -1,4 +1,4 @@
-package org.lushplugins.pinata.services;
+package org.lushplugins.pinata.service;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;

@@ -1,6 +1,6 @@
-package org.lushplugins.pinata.services;
+package org.lushplugins.pinata.service;
 
-import org.lushplugins.pinata.configuration.MessageManager;
+import org.lushplugins.pinata.config.MessageManager;
 import org.lushplugins.pinata.pinata.model.Pinata;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BarColor;

@@ -1,9 +1,9 @@
-package org.lushplugins.pinata.listeners;
+package org.lushplugins.pinata.listener;
 
 import org.lushplugins.pinata.pinata.PinataRepository;
 import org.lushplugins.pinata.pinata.PinataService;
 import org.lushplugins.pinata.pinata.model.Pinata;
-import org.lushplugins.pinata.services.BossBarService;
+import org.lushplugins.pinata.service.BossBarService;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;

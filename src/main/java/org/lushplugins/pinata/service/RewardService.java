@@ -1,6 +1,6 @@
-package org.lushplugins.pinata.services;
+package org.lushplugins.pinata.service;
 
-import org.lushplugins.pinata.configuration.ConfigManager;
+import org.lushplugins.pinata.config.ConfigManager;
 import org.lushplugins.pinata.pinata.model.Pinata;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
